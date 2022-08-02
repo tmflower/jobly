@@ -18,14 +18,14 @@ beforeEach(commonBeforeEach);
 afterEach(commonAfterEach);
 afterAll(commonAfterAll);
 
-/************************************** POST /companies */
+/************************************** POST /jobs */
 
-describe("POST /companies", function () {
-  const newCompany = {
-    handle: "new",
-    name: "New",
-    logoUrl: "http://new.img",
-    description: "DescNew",
+describe("POST /jobs", function () {
+  const newJob = {
+    title: "test job",
+    salary: 99999,
+    equity: 0.05,
+    companyHandle: "c1",
     numEmployees: 10,
   };
 

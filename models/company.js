@@ -61,6 +61,57 @@ class Company {
     return companiesRes.rows;
   }
 
+  /** Allow API user to filter results by name and max/min number of employees; this function will only be called if user adds filters to query string */
+  static async filterBy(filters) {
+
+    // create empty array and initialize variable for use within scope of function
+    console.log(filters);
+    let allFilters = [];
+    let selectedFilters;
+    // loop through any selected filters; assign variable names to key & value for each
+    for (let filter of filters) {
+      let filterName = filter[0];
+      let filterValue = filter[1];
+      console.log(filterName, filterValue);
+      // convert js to sql for each possible filter, modifying any value for name to use with iLIKE in query for case insensitivity and similar but not equal matches
+      // push these into empty array allFilers
+      if (filterName === "nameLike") {
+        filterValue = `'%${filter[1]}%'`;
+        allFilters.push(`name iLIKE ${filterValue}`);
+      }
+      if (filterName === "minEmployees") {
+        filterValue = `${filter[1]}`;
+        filterName = "num_employees";
+        allFilters.push(`${filterName} >= ${filterValue}`);
+      }
+      if (filterName === "maxEmployees") {
+        filterValue = `${filter[1]}`;
+        filterName = "num_employees";
+        allFilters.push(`${filterName} <= ${filterValue}`);
+      }
+      
+      //  add "AND" between each WHERE clause in query string
+      if (allFilters.length !== (2 * filters.length) - 1) {
+        allFilters.push(`AND`);
+      }
+      //  remove commas and convert to string to complete SQL-friendly query
+      selectedFilters = allFilters.join(' ');
+      
+      console.log(selectedFilters);
+    }
+    // complete the query, applying the selected filters and return the results
+    const companiesRes = await db.query(
+      `SELECT handle,
+              name,
+              description,
+              num_employees AS "numEmployees",
+              logo_url AS "logoUrl"
+       FROM companies
+       WHERE ${selectedFilters}
+       ORDER BY name`);
+return companiesRes.rows;
+  }
+
   /** Given a company handle, return data about company.
    *
    * Returns { handle, name, description, numEmployees, logoUrl, jobs }
