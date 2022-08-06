@@ -1,3 +1,4 @@
+process.env.NODE_ENV = "test";
 const bcrypt = require("bcrypt");
 
 const db = require("../db.js");
@@ -28,6 +29,12 @@ async function commonBeforeAll() {
         await bcrypt.hash("password1", BCRYPT_WORK_FACTOR),
         await bcrypt.hash("password2", BCRYPT_WORK_FACTOR),
       ]);
+
+  await db.query(`
+      INSERT INTO jobs(id, title, salary, equity, company_handle)
+      VALUES(1, 'j1', 100000, '0.02', 'c1'),
+            (2, 'j2', 85000, '0.04', 'c2'),
+            (3, 'j3', 115000, '0.01', 'c3')`);
 }
 
 async function commonBeforeEach() {

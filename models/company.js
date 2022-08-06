@@ -65,14 +65,12 @@ class Company {
   static async filterBy(filters) {
 
     // create empty array and initialize variable for use within scope of function
-    console.log(filters);
     let allFilters = [];
     let selectedFilters;
     // loop through any selected filters; assign variable names to key & value for each
     for (let filter of filters) {
       let filterName = filter[0];
       let filterValue = filter[1];
-      console.log(filterName, filterValue);
       // convert js to sql for each possible filter, modifying any value for name to use with iLIKE in query for case insensitivity and similar but not equal matches
       // push these into empty array allFilers
       if (filterName === "nameLike") {
@@ -96,8 +94,6 @@ class Company {
       }
       //  remove commas and convert to string to complete SQL-friendly query
       selectedFilters = allFilters.join(' ');
-      
-      console.log(selectedFilters);
     }
     // complete the query, applying the selected filters and return the results
     const companiesRes = await db.query(

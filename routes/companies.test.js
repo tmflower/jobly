@@ -1,4 +1,5 @@
 "use strict";
+process.env.NODE_ENV = "test";
 
 const request = require("supertest");
 
@@ -152,19 +153,23 @@ describe("GET /companies", function () {
 
 describe("GET /companies/:handle", function () {
   test("works for anon", async function () {
-    const resp = await request(app).get(`/companies/c1`);
-    expect(resp.body).toEqual({
+    const resp = await request(app).get(`/companies/c2`);
+    expect(resp.body).toEqual(    {
       company: {
-        handle: "c1",
-        name: "C1",
-        description: "Desc1",
-        numEmployees: 1,
-        logoUrl: "http://c1.img",
+        handle: 'c2',
+        name: 'C2',
+        description: 'Desc2',
+        numEmployees: 2,
+        logoUrl: 'http://c2.img'
       },
+      jobs: [
+        { title: 'j2', salary: 85000, equity: '0.04', companyHandle: 'c2' }
+      ]
     });
   });
 
   test("works for anon: company w/o jobs", async function () {
+    await db.query(`DELETE FROM jobs;`);
     const resp = await request(app).get(`/companies/c2`);
     expect(resp.body).toEqual({
       company: {
@@ -174,6 +179,7 @@ describe("GET /companies/:handle", function () {
         numEmployees: 2,
         logoUrl: "http://c2.img",
       },
+      jobs: []
     });
   });
 
@@ -193,15 +199,16 @@ describe("PATCH /companies/:handle", function () {
           name: "C1-new",
         })
         .set("authorization", `Bearer ${u1Token}`);
+
     expect(resp.body).toEqual({
-      company: {
-        handle: "c1",
-        name: "C1-new",
-        description: "Desc1",
-        numEmployees: 1,
-        logoUrl: "http://c1.img",
-      },
-    });
+        company: {
+          handle: 'c1',
+          name: 'C1-new',
+          description: 'Desc1',
+          numEmployees: 1,
+          logoUrl: 'http://c1.img'
+        }
+    },);
   });
 
   test("unauth for anon", async function () {

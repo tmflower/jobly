@@ -9,8 +9,8 @@ const { BadRequestError, ExpressError } = require("../expressError");
 const { ensureLoggedIn, hasAdminAuth } = require("../middleware/auth");
 const Job = require("../models/job");
 
-// const companyNewSchema = require("../schemas/companyNew.json");
-// const companyUpdateSchema = require("../schemas/companyUpdate.json");
+const jobSchema = require("../schemas/jobNew.json");
+const jobUpdateSchema = require("../schemas/jobUpdate.json");
 
 const router = new express.Router();
 
@@ -26,11 +26,11 @@ const router = new express.Router();
 
 router.post("/", ensureLoggedIn, hasAdminAuth, async function (req, res, next) {
   try {
-    // const validator = jsonschema.validate(req.body, companyNewSchema);
-    // if (!validator.valid) {
-    //   const errs = validator.errors.map(e => e.stack);
-    //   throw new BadRequestError(errs);
-    // }
+    const validator = jsonschema.validate(req.body, jobSchema);
+    if (!validator.valid) {
+      const errs = validator.errors.map(e => e.stack);
+      throw new BadRequestError(errs);
+    }
 
     const job = await Job.create(req.body);
     return res.status(201).json({ job });
@@ -52,17 +52,11 @@ router.post("/", ensureLoggedIn, hasAdminAuth, async function (req, res, next) {
 
 router.get("/", async function (req, res, next) {
   try {
-    // check if there are any filters in query string; if so, apply them using the filterBy() method. Otherwise, query all companies in db
+    // check if there are any filters in query string; if so, apply them using the filterBy() method. Otherwise, query all jobs in db
       const filters = (Object.entries(req.query));
       if (filters.length !== 0) {
-        // give error feedback if minEmployees is greater than maxEmployees; else continue with filtered results
-        let min = req.query.minEmployees;
-        let max = req.query.maxEmployees;
-        if (+min > +max) {
-          throw new ExpressError("minEmployees cannot be greater than maxEmployees", 400);
-        }
-        const filteredCompanies = await Company.filterBy(filters);
-        return res.json({ filteredCompanies });
+        const filteredJobs = await Job.filterBy(filters);
+        return res.json({ filteredJobs });
       }
     const jobs = await Job.findAll();
     return res.json({ jobs });
@@ -101,11 +95,11 @@ router.get("/:id", async function (req, res, next) {
 
 router.patch("/:id", ensureLoggedIn, hasAdminAuth, async function (req, res, next) {
   try {
-    // const validator = jsonschema.validate(req.body, companyUpdateSchema);
-    // if (!validator.valid) {
-    //   const errs = validator.errors.map(e => e.stack);
-    //   throw new BadRequestError(errs);
-    // }
+    const validator = jsonschema.validate(req.body, jobUpdateSchema);
+    if (!validator.valid) {
+      const errs = validator.errors.map(e => e.stack);
+      throw new BadRequestError(errs);
+    }
 
     const job = await Job.update(req.params.id, req.body);
     return res.json({ job });

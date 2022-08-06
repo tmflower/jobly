@@ -1,6 +1,6 @@
 const { BadRequestError } = require("../expressError");
 
-// this function is called in the update method of both the user and company models. It takes 2 arguments: 1.) dataToUpdate, which is the same as the data argument passed to the update method, and 2.) jsToSql, which is an object of the model properties with the keys represented in js syntax and the corresponding values represented in sql syntax (for those properties that require conversion).
+// this function is called in the update method of both the user, company, and job models. It takes 2 arguments: 1.) dataToUpdate, which is the same as the data argument passed to the update method, and 2.) jsToSql, which is an object of the model properties with the keys represented in js syntax and the corresponding values represented in sql syntax (for those properties that require conversion).
 
 function sqlForPartialUpdate(dataToUpdate, jsToSql) {
   // create a variable, keys, that will hold all the properties that will be updated, taken from the dataToUpdate using the Object.keys() method.

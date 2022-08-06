@@ -1,4 +1,5 @@
 "use strict";
+process.env.NODE_ENV = "test";
 
 const db = require("../db");
 const { BadRequestError, NotFoundError } = require("../expressError");
@@ -29,7 +30,7 @@ class Job {
             `INSERT INTO jobs
              (title, salary, equity, company_handle)
              VALUES ($1, $2, $3, $4)
-             RETURNING title, salary, equity, company_handle AS "companyHandle"`,
+             RETURNING id, title, salary, equity, company_handle AS "companyHandle"`,
           [
             title, salary, equity, companyHandle,
           ],
@@ -46,10 +47,11 @@ class Job {
   
     static async findAll() {
       const jobsRes = await db.query(
-            `SELECT title,
+            `SELECT
+             title,
              salary,
              equity,
-             company_handle
+             company_handle AS "companyHandle"
              FROM jobs
              ORDER BY title`);
       return jobsRes.rows;
@@ -59,29 +61,28 @@ class Job {
     static async filterBy(filters) {
   
       // create empty array and initialize variable for use within scope of function
-      console.log(filters);
       let allFilters = [];
       let selectedFilters;
       // loop through any selected filters; assign variable names to key & value for each
       for (let filter of filters) {
         let filterName = filter[0];
         let filterValue = filter[1];
-        console.log(filterName, filterValue);
         // convert js to sql for each possible filter, modifying any value for name to use with iLIKE in query for case insensitivity and similar but not equal matches
         // push these into empty array allFilers
-        if (filterName === "nameLike") {
+        if (filterName === "title") {
           filterValue = `'%${filter[1]}%'`;
-          allFilters.push(`name iLIKE ${filterValue}`);
+          allFilters.push(`title iLIKE ${filterValue}`);
         }
-        if (filterName === "minEmployees") {
+        if (filterName === "minSalary") {
           filterValue = `${filter[1]}`;
-          filterName = "num_employees";
+          filterName = "salary";
           allFilters.push(`${filterName} >= ${filterValue}`);
         }
-        if (filterName === "maxEmployees") {
-          filterValue = `${filter[1]}`;
-          filterName = "num_employees";
-          allFilters.push(`${filterName} <= ${filterValue}`);
+        if (filterName === "hasEquity") {
+          filterName = "equity";
+          if (filterValue) {
+            allFilters.push(`${filterName} > 0`);
+          } 
         }
         
         //  add "AND" between each WHERE clause in query string
@@ -90,20 +91,18 @@ class Job {
         }
         //  remove commas and convert to string to complete SQL-friendly query
         selectedFilters = allFilters.join(' ');
-        
-        console.log(selectedFilters);
       }
+      
       // complete the query, applying the selected filters and return the results
-      const companiesRes = await db.query(
-        `SELECT handle,
-                name,
-                description,
-                num_employees AS "numEmployees",
-                logo_url AS "logoUrl"
-         FROM companies
+      const jobsRes = await db.query(
+        `SELECT title,
+                salary,
+                equity,
+                company_handle AS "companyHandle"
+         FROM jobs
          WHERE ${selectedFilters}
-         ORDER BY name`);
-  return companiesRes.rows;
+         ORDER BY salary DESC`);
+  return jobsRes.rows;
     }
   
     /** Given a job id, return data about job.
@@ -116,10 +115,12 @@ class Job {
   
     static async get(id) {
       const jobRes = await db.query(
-                `SELECT title,
+                `SELECT 
+                id,
+                title,
                 salary,
                 equity,
-                company_handle
+                company_handle AS "companyHandle"
                 FROM jobs
                 WHERE id = $1`,
             [id]);
@@ -131,6 +132,21 @@ class Job {
       return job;
     }
   
+    static async getByCompany(handle) {
+      const jobRes = await db.query(
+        `SELECT 
+        title,
+        salary,
+        equity,
+        company_handle AS "companyHandle"
+        FROM jobs
+        WHERE company_handle = $1`,
+    [handle]);
+
+    const jobs = jobRes.rows;
+    return jobs;
+    }
+
     /** Update job data with `data`.
      *
      * This is a "partial update" --- it's fine if data doesn't contain all the
@@ -153,7 +169,7 @@ class Job {
       const querySql = `UPDATE jobs 
                         SET ${setCols} 
                         WHERE id = ${idVarIdx} 
-                        RETURNING id, 
+                        RETURNING id,
                                   title, 
                                   salary, 
                                   equity, 

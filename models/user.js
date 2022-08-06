@@ -118,28 +118,37 @@ class User {
   /** Given a username, return data about user.
    *
    * Returns { username, first_name, last_name, is_admin, jobs }
-   *   where jobs is { id, title, company_handle, company_name, state }
+   *   where jobs is { id }
    *
    * Throws NotFoundError if user not found.
    **/
 
   static async get(username) {
+
     const userRes = await db.query(
-          `SELECT username,
-                  first_name AS "firstName",
-                  last_name AS "lastName",
-                  email,
-                  is_admin AS "isAdmin"
-           FROM users
-           WHERE username = $1`,
-        [username],
+      `SELECT username,
+              first_name AS "firstName",
+              last_name AS "lastName",
+              email,
+              is_admin AS "isAdmin"
+              FROM users
+              WHERE username = $1`,
+    [username]
     );
 
+    const jobsRes = await db.query(
+      `SELECT job_id 
+      AS "jobId" 
+      FROM applications 
+      WHERE username = $1`, 
+      [username]);
+
+    const jobs = jobsRes.rows;
     const user = userRes.rows[0];
 
     if (!user) throw new NotFoundError(`No user: ${username}`);
 
-    return user;
+    return { user, jobs };
   }
 
   /** Update user data with `data`.
@@ -198,11 +207,25 @@ class User {
            FROM users
            WHERE username = $1
            RETURNING username`,
-        [username],
+        [username]
     );
     const user = result.rows[0];
 
     if (!user) throw new NotFoundError(`No user: ${username}`);
+  }
+
+  /** Add job id and username to applications; returns json message of "applied" job id */
+
+  static async apply(username, jobId) {
+    let result = await db.query(
+      `INSERT INTO applications
+      (username, job_id)
+      VALUES ($1, $2)
+      RETURNING username, job_id as "jobId"`,
+      [username, jobId]
+    );
+    const applied = result.rows[0];
+    return applied;
   }
 }
 

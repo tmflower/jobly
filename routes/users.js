@@ -1,5 +1,5 @@
 "use strict";
-
+process.env.NODE_ENV = "test";
 /** Routes for users. */
 
 const jsonschema = require("jsonschema");
@@ -8,6 +8,7 @@ const express = require("express");
 const { ensureLoggedIn, hasAdminAuth, isUserOrAdmin } = require("../middleware/auth");
 const { BadRequestError } = require("../expressError");
 const User = require("../models/user");
+const Job = require("../models/job");
 const { createToken } = require("../helpers/tokens");
 const userNewSchema = require("../schemas/userNew.json");
 const userUpdateSchema = require("../schemas/userUpdate.json");
@@ -43,7 +44,6 @@ router.post("/", ensureLoggedIn, hasAdminAuth, async function (req, res, next) {
   }
 });
 
-
 /** GET / => { users: [ {username, firstName, lastName, email }, ... ] }
  *
  * Returns list of all users.
@@ -71,12 +71,7 @@ router.get("/", ensureLoggedIn, hasAdminAuth, async function (req, res, next) {
 router.get("/:username", ensureLoggedIn, isUserOrAdmin, async function (req, res, next) {
   try {
     const user = await User.get(req.params.username);
-    // if (res.locals.user.username === user.username || res.locals.user.isAdmin === true) {
       return res.json({ user });
-    // }
-    // else {
-    //   throw new UnauthorizedError();
-    // }
   } catch (err) {
     return next(err);
   }
@@ -108,7 +103,6 @@ router.patch("/:username", ensureLoggedIn, isUserOrAdmin, async function (req, r
   }
 });
 
-
 /** DELETE /[username]  =>  { deleted: username }
  *
  * Authorization required: login, admin or same user
@@ -123,5 +117,23 @@ router.delete("/:username", ensureLoggedIn, isUserOrAdmin, async function (req, 
   }
 });
 
+/** POST / [username]/jobs/[id] => { username, job_id } 
+ * 
+ * Returns { applied: jobId }
+ * 
+ * Authorization required: login, admin or same user
+ **/ 
+
+ router.post("/:username/jobs/:id", ensureLoggedIn, isUserOrAdmin, async function (req, res, next) {
+  try {
+    const user = await User.get(req.params.username);
+    const job = await Job.get(req.params.id);
+    const applied = await User.apply(user.username, job.id);
+    return res.json({ applied: applied.jobId});
+  }
+  catch(err) {
+    return next(err);
+  }
+});
 
 module.exports = router;

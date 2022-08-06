@@ -1,4 +1,5 @@
 "use strict";
+process.env.NODE_ENV = "test";
 
 const request = require("supertest");
 
@@ -169,14 +170,17 @@ describe("GET /users/:username", function () {
     const resp = await request(app)
         .get(`/users/u1`)
         .set("authorization", `Bearer ${u1Token}`);
-    expect(resp.body).toEqual({
+    expect(resp.body).toEqual(    {
       user: {
-        username: "u1",
-        firstName: "U1F",
-        lastName: "U1L",
-        email: "user1@user.com",
-        isAdmin: true,
-      },
+        user: {
+          username: 'u1',
+          firstName: 'U1F',
+          lastName: 'U1L',
+          email: 'user1@user.com',
+          isAdmin: true
+        },
+        jobs: []
+      }
     });
   });
 
